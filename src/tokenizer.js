@@ -102,11 +102,25 @@ class Tokenizer {
 
 		tokenContent = tokenContent.trim()
 
-		tokenContent.length &&
+		/**
+		 * remove redundant whitespaces
+		 */
+		if (tokenContent.length) {
+			let prevToken = this.tokens[this.tokens.length - 1]
+
+			if (prevToken.type === TokenType.text) {
+				let value = prevToken.value
+
+				if (value.match(/\s+$/)) {
+					prevToken.value = value.trimRight()
+				}
+			}
+
 			this.tokens.push({
 				type: TokenType[type],
 				value: tokenContent
 			})
+		}
 	}
 
 	run(source) {

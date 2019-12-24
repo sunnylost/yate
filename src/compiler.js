@@ -213,7 +213,7 @@ class Compiler {
 				this.emit('}')
 				break
 			default:
-				console.log('unknow tag:' + parts[0])
+				console.log('unknown tag:' + parts[0])
 		}
 	}
 
