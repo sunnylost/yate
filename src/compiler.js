@@ -1,5 +1,6 @@
 const Tokenizer = require('./tokenizer')
 const TokenType = require('./tokenType')
+const { uuid } = require('./util')
 const DOT = '.'
 const BRACKET_LEFT = '['
 const BRACKET_RIGHT = ']'
@@ -64,16 +65,19 @@ function parseAttrPath(expr) {
 
 class Compiler {
 	constructor(config) {
+		let id = uuid()
+
 		this.$tokenizer = new Tokenizer(config)
 		this.codes = []
-		this.strName = 'str_' + Date.now()
-		this.ctxName = 'ctx_' + Date.now()
+		this.strName = 'str_' + id
+		this.ctxName = 'ctx_' + id
+		this.envName = 'env_' + id
 	}
 
 	emit(content, config = {}) {
-		if (config.isRaw) {
+		if (config.raw) {
 			this.codes.push(`${this.strName} += \`${content}\`;`)
-		} else if (config.needConcat) {
+		} else if (config.concat) {
 			this.codes.push(`${this.strName} += ${content};`)
 		} else {
 			this.codes.push(content)
@@ -81,14 +85,109 @@ class Compiler {
 	}
 
 	compileExpr(val) {
-		if (isStringLiteral(val)) {
-			this.emit(val.substring(1, val.length - 1), {
-				isRaw: true
-			})
-		} else {
-			this.emit(`${parseAttrPath(this.ctxName + '.' + val)} || ''`, {
-				needConcat: true
-			})
+		let len = val.length
+		let parts = []
+		let item = ''
+		let isInString = false
+		let strStart = []
+
+		for (let i = 0; i < len; i++) {
+			let c = val[i]
+
+			switch (c) {
+				case '|':
+					if (isInString) {
+						item += c
+					} else {
+						item = item.trim()
+						item.length && parts.push(item)
+						item = ''
+					}
+
+					break
+
+				case '"':
+				case "'":
+					if (!strStart.length) {
+						strStart.push(c)
+						isInString = true
+					} else {
+						if (strStart[strStart.length - 1] === c) {
+							strStart.splice(strStart.length - 1, 1)
+							isInString = !!strStart.length
+						} else {
+							isInString = true
+							strStart.push(c)
+						}
+					}
+
+					item += c
+
+					break
+
+				case ' ':
+					if (!isInString) {
+						continue
+					}
+					break
+
+				default:
+					item += c
+					break
+			}
+		}
+
+		item.length && parts.push(item)
+
+		if (parts.length) {
+			let attr = parts.splice(0, 1)
+			let attrName = '__tmp__'
+
+			this.emit(`var ${attrName};`)
+
+			if (isStringLiteral(attr)) {
+				this.emit(`${attrName} = ${attr.substring(1, attr.length - 1)}`)
+			} else {
+				this.emit(`${attrName} = ${parseAttrPath(this.ctxName + '.' + attr)} || '';`)
+			}
+
+			if (parts.length) {
+				let pre = []
+				let suf = []
+				let isPassed = false
+				let envName = this.envName
+
+				while (parts.length) {
+					let filter = parts.pop()
+
+					let parenIndex = filter.indexOf('(')
+					let args = ''
+
+					if (parenIndex !== -1) {
+						args = filter.substring(parenIndex + 1, filter.length - 1)
+						filter = filter.substring(0, parenIndex)
+					}
+
+					filter = envName + '.filter.' + filter
+
+					if (isPassed) {
+						pre.unshift(filter + '(')
+					} else {
+						isPassed = true
+						pre.unshift(filter + '(' + attrName)
+					}
+
+					suf.push(',' + args + ')')
+				}
+
+				this.emit(pre.join('') + suf.join(''), {
+					concat: true
+				})
+			} else {
+				this.emit(attrName, {
+					concat: true
+				})
+			}
 		}
 	}
 
@@ -104,8 +203,11 @@ class Compiler {
 			case 'for':
 				this.compileForStatement(parts)
 				break
+			case 'break': //TODO
+				this.emit('break;')
+				break
 			case 'endfor':
-				this.emit('}')
+				this.emit('})')
 				break
 			case 'endif':
 				this.emit('}')
@@ -116,26 +218,26 @@ class Compiler {
 	}
 
 	compileForStatement(parts) {
-		let iteratorName = '_iter_' + ((Math.random() * 1000) >>> 0)
+		let ctxName = this.ctxName
+		let envName = this.envName
+		let iteratorName = '_iter_' + uuid()
 		this.emit(
-			`var ${iteratorName} = ${parseAttrPath(
-				this.ctxName + '.' + parts[parts.length - 1]
-			)} || [];`
+			`var ${iteratorName} = ${parseAttrPath(ctxName + '.' + parts[parts.length - 1])} || [];`
 		)
 
 		if (parts[2] === 'in') {
-			//only val
-			this.emit(`for(var i = 0; i < ${iteratorName}.length; i++) {`)
-			this.emit(`var ${parts[1]} = ${iteratorName}[i];`)
-			this.emit(`${this.ctxName}.${parts[1]} = ${parts[1]};`)
+			this.emit(`${envName}.ext.each(${iteratorName}, function(__val__) {
+			var ${ctxName} = Object.assign({}, ${envName}.ctx, {
+				${parts[1]}: __val__
+			});
+			`)
 		}
 	}
 
 	generateCode() {
-		let codes = this.codes
-		let strName = this.strName
+		let { codes, strName, envName } = this
 
-		return `function generatedTemplateFn(env) {
+		return `function generatedTemplateFn(${envName}) {
 			return function fn(${this.ctxName}) {
 				var ${strName} = '';
 				try {
@@ -144,7 +246,7 @@ class Compiler {
 					console.log(e);
 					return '';
 				}
-				
+
 				return ${strName};
 			}
 		}`
@@ -166,7 +268,7 @@ class Compiler {
 
 				case TokenType.text:
 					this.emit(`${t.value}`, {
-						isRaw: true
+						raw: true
 					})
 					break
 

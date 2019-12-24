@@ -1,7 +1,7 @@
 const fs = require('fs')
 const Tokenizer = require('./tokenizer')
 const Compiler = require('./compiler')
-const Helper = require('./ext')
+const Env = require('./env')
 
 class Template {
 	constructor(config) {
@@ -15,9 +15,17 @@ class Template {
 	}
 
 	compile(str) {
+		let envName = this.$compiler.envName
 		let rawFn = this.$compiler.run(str)
-
-		return new Function('env', `return ${rawFn}(env)`)(Helper)
+		let env = new Env()
+		return {
+			env,
+			template: new Function(envName, `return ${rawFn}(${envName})`)(env),
+			render(ctx) {
+				env.ctx = ctx || {}
+				return this.template(env.ctx)
+			}
+		}
 	}
 
 	render(name, ctx, callback) {
