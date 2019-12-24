@@ -44,7 +44,7 @@ class Template {
 		let hasCallback = typeof callback === 'function'
 
 		try {
-			let result = fn.call(null, ctx)
+			let result = fn.render(ctx)
 
 			if (hasCallback) {
 				callback(null, result)

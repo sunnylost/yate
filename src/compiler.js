@@ -68,7 +68,6 @@ class Compiler {
 		let id = uuid()
 
 		this.$tokenizer = new Tokenizer(config)
-		this.codes = []
 		this.strName = 'str_' + id
 		this.ctxName = 'ctx_' + id
 		this.envName = 'env_' + id
@@ -209,6 +208,9 @@ class Compiler {
 			case 'endfor':
 				this.emit('})')
 				break
+			case 'if':
+				this.compileIfStatement(parts)
+				break
 			case 'endif':
 				this.emit('}')
 				break
@@ -234,6 +236,10 @@ class Compiler {
 		}
 	}
 
+	compileIfStatement() {
+		//TODO
+	}
+
 	generateCode() {
 		let { codes, strName, envName } = this
 
@@ -253,6 +259,7 @@ class Compiler {
 	}
 
 	run(source) {
+		this.codes = []
 		let tokens = this.$tokenizer.run(source)
 
 		while (tokens.length) {

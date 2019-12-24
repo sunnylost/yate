@@ -108,7 +108,7 @@ class Tokenizer {
 		if (tokenContent.length) {
 			let prevToken = this.tokens[this.tokens.length - 1]
 
-			if (prevToken.type === TokenType.text) {
+			if (prevToken && prevToken.type === TokenType.text) {
 				let value = prevToken.value
 
 				if (value.match(/\s+$/)) {
