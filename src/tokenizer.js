@@ -1,7 +1,7 @@
-const TokenType = require('./tokenType')
+import TokenType from './tokenType.js'
 const startTags = ['stmtStart', 'exprStart', 'commentStart']
 
-class Tokenizer {
+export default class Tokenizer {
 	constructor(config) {
 		this.config = config || {}
 		this.tags = Object.assign({}, TokenType, this.config.tags)
@@ -137,5 +137,3 @@ class Tokenizer {
 		return this.tokens
 	}
 }
-
-module.exports = Tokenizer

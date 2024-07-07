@@ -1,7 +1,7 @@
-const Ext = require('./ext')
-const Filter = require('./filter')
+import Ext from './ext.js'
+import * as Filter from './filter.js'
 
-module.exports = function() {
+export default function() {
 	return {
 		ctx: {},
 		filter: Filter,

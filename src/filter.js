@@ -1,17 +1,3 @@
-const filters = {
-	abs(v) {
-		return Math.abs(v)
-	},
-
-	capitalize(v) {
-		return typeof v === 'string' ? v.replace(/^./, v => v.toUpperCase()) : v
-	},
-
-	join(arr, separator = '') {
-		return Array.isArray(arr) ? arr.join(separator) : arr
-	}
-}
-
 function wrap(fn) {
 	return function(...args) {
 		let ret = fn.apply(null, args)
@@ -20,6 +6,14 @@ function wrap(fn) {
 	}
 }
 
-Object.entries(filters).forEach(([name, fn]) => {
-	exports[name] = wrap(fn)
+export const abs = wrap(function abs(v) {
+	return Math.abs(v)
+})
+
+export const capitalize = wrap(function(v) {
+	return typeof v === 'string' ? v.replace(/^./, v => v.toUpperCase()) : v
+})
+
+export const join = wrap( function(arr, separator = '') {
+	return Array.isArray(arr) ? arr.join(separator) : arr
 })

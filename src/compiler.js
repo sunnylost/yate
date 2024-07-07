@@ -1,6 +1,6 @@
-const Tokenizer = require('./tokenizer')
-const TokenType = require('./tokenType')
-const { uuid } = require('./util')
+import Tokenizer from './tokenizer.js'
+import TokenType from './tokenType.js'
+import { uuid } from './util.js'
 const DOT = '.'
 const BRACKET_LEFT = '['
 const BRACKET_RIGHT = ']'
@@ -63,7 +63,7 @@ function parseAttrPath(expr) {
 	return expr
 }
 
-class Compiler {
+export default class Compiler {
 	constructor(config) {
 		let id = uuid()
 
@@ -288,5 +288,3 @@ class Compiler {
 		return this.generateCode()
 	}
 }
-
-module.exports = Compiler

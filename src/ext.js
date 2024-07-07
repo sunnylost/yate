@@ -1,4 +1,4 @@
-module.exports = {
+export default {
 	htmlEncode(s) {
 		let escaped = {
 			'&': '&amp;',

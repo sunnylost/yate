@@ -1,5 +1,5 @@
 import test from 'ava'
-import Template from '../src/index'
+import Template from '../src/index.js'
 
 test('for tag', t => {
 	let template = new Template()

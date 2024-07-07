@@ -1,9 +1,9 @@
-const fs = require('fs')
-const Tokenizer = require('./tokenizer')
-const Compiler = require('./compiler')
-const Env = require('./env')
+import fs from 'node:fs'
+import Tokenizer from './tokenizer.js'
+import Compiler from './compiler.js'
+import Env from './env.js'
 
-class Template {
+export default class Template {
 	constructor(config) {
 		this.config = Object.assign({}, config)
 		this.$tokenizer = new Tokenizer(this.config)
@@ -61,5 +61,3 @@ class Template {
 		}
 	}
 }
-
-module.exports = Template
