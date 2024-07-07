@@ -7,17 +7,17 @@ const BRACKET_RIGHT = ']'
 const rbracket = /([^[]+)(\[[^]]+)/
 
 function isStringLiteral(val) {
-	let firstChar = val[0]
-	let lastChar = val[val.length - 1]
+    let firstChar = val[0]
+    let lastChar = val[val.length - 1]
 
-	//string
-	if (firstChar === "'" || firstChar === '"') {
-		if (firstChar === lastChar) {
-			return true
-		} else {
-			throw Error(`${val} is not enclosed correctly.`)
-		}
-	}
+    //string
+    if (firstChar === "'" || firstChar === '"') {
+        if (firstChar === lastChar) {
+            return true
+        } else {
+            throw Error(`${val} is not enclosed correctly.`)
+        }
+    }
 }
 
 /**
@@ -32,218 +32,218 @@ function isStringLiteral(val) {
  * TODO: check 0
  */
 function parseAttrPath(expr) {
-	if (expr.includes(DOT) || (expr.includes(BRACKET_LEFT) && expr.includes(BRACKET_RIGHT))) {
-		if (expr.endsWith(DOT)) {
-			throw Error(`"${expr}" is not a correct format.`)
-		}
+    if (expr.includes(DOT) || (expr.includes(BRACKET_LEFT) && expr.includes(BRACKET_RIGHT))) {
+        if (expr.endsWith(DOT)) {
+            throw Error(`"${expr}" is not a correct format.`)
+        }
 
-		let arr = expr.split(DOT),
-			newArr = []
+        let arr = expr.split(DOT),
+            newArr = []
 
-		for (let i = 0; i < arr.length; i++) {
-			let item = arr[i]
-			let previous = arr.slice(0, i + 1)
+        for (let i = 0; i < arr.length; i++) {
+            let item = arr[i]
+            let previous = arr.slice(0, i + 1)
 
-			if (item.includes(BRACKET_LEFT)) {
-				let matches = item.match(rbracket)
+            if (item.includes(BRACKET_LEFT)) {
+                let matches = item.match(rbracket)
 
-				if (matches && matches.length > 2) {
-					let tmp = previous.slice(0, previous.length - 1)
-					tmp.push(matches[1])
-					newArr.push(tmp.join(DOT))
-				}
-			}
+                if (matches && matches.length > 2) {
+                    let tmp = previous.slice(0, previous.length - 1)
+                    tmp.push(matches[1])
+                    newArr.push(tmp.join(DOT))
+                }
+            }
 
-			newArr.push(previous.join('.'))
-		}
+            newArr.push(previous.join('.'))
+        }
 
-		return newArr.join(' && ')
-	}
+        return newArr.join(' && ')
+    }
 
-	return expr
+    return expr
 }
 
 export default class Compiler {
-	constructor(config) {
-		let id = uuid()
+    constructor(config) {
+        let id = uuid()
 
-		this.$tokenizer = new Tokenizer(config)
-		this.strName = 'str_' + id
-		this.ctxName = 'ctx_' + id
-		this.envName = 'env_' + id
-	}
+        this.$tokenizer = new Tokenizer(config)
+        this.strName = 'str_' + id
+        this.ctxName = 'ctx_' + id
+        this.envName = 'env_' + id
+    }
 
-	emit(content, config = {}) {
-		if (config.raw) {
-			this.codes.push(`${this.strName} += \`${content}\`;`)
-		} else if (config.concat) {
-			this.codes.push(`${this.strName} += ${content};`)
-		} else {
-			this.codes.push(content)
-		}
-	}
+    emit(content, config = {}) {
+        if (config.raw) {
+            this.codes.push(`${this.strName} += \`${content}\`;`)
+        } else if (config.concat) {
+            this.codes.push(`${this.strName} += ${content};`)
+        } else {
+            this.codes.push(content)
+        }
+    }
 
-	compileExpr(val) {
-		let len = val.length
-		let parts = []
-		let item = ''
-		let isInString = false
-		let strStart = []
+    compileExpr(val) {
+        let len = val.length
+        let parts = []
+        let item = ''
+        let isInString = false
+        let strStart = []
 
-		for (let i = 0; i < len; i++) {
-			let c = val[i]
+        for (let i = 0; i < len; i++) {
+            let c = val[i]
 
-			switch (c) {
-				case '|':
-					if (isInString) {
-						item += c
-					} else {
-						item = item.trim()
-						item.length && parts.push(item)
-						item = ''
-					}
+            switch (c) {
+                case '|':
+                    if (isInString) {
+                        item += c
+                    } else {
+                        item = item.trim()
+                        item.length && parts.push(item)
+                        item = ''
+                    }
 
-					break
+                    break
 
-				case '"':
-				case "'":
-					if (!strStart.length) {
-						strStart.push(c)
-						isInString = true
-					} else {
-						if (strStart[strStart.length - 1] === c) {
-							strStart.splice(strStart.length - 1, 1)
-							isInString = !!strStart.length
-						} else {
-							isInString = true
-							strStart.push(c)
-						}
-					}
+                case '"':
+                case "'":
+                    if (!strStart.length) {
+                        strStart.push(c)
+                        isInString = true
+                    } else {
+                        if (strStart[strStart.length - 1] === c) {
+                            strStart.splice(strStart.length - 1, 1)
+                            isInString = !!strStart.length
+                        } else {
+                            isInString = true
+                            strStart.push(c)
+                        }
+                    }
 
-					item += c
+                    item += c
 
-					break
+                    break
 
-				case ' ':
-					if (!isInString) {
-						continue
-					}
-					break
+                case ' ':
+                    if (!isInString) {
+                        continue
+                    }
+                    break
 
-				default:
-					item += c
-					break
-			}
-		}
+                default:
+                    item += c
+                    break
+            }
+        }
 
-		item.length && parts.push(item)
+        item.length && parts.push(item)
 
-		if (parts.length) {
-			let attr = parts.splice(0, 1)
-			let attrName = '__tmp__'
+        if (parts.length) {
+            let attr = parts.splice(0, 1)
+            let attrName = '__tmp__'
 
-			this.emit(`var ${attrName};`)
+            this.emit(`var ${attrName};`)
 
-			if (isStringLiteral(attr)) {
-				this.emit(`${attrName} = ${attr.substring(1, attr.length - 1)}`)
-			} else {
-				this.emit(`${attrName} = ${parseAttrPath(this.ctxName + '.' + attr)} || '';`)
-			}
+            if (isStringLiteral(attr)) {
+                this.emit(`${attrName} = ${attr.substring(1, attr.length - 1)}`)
+            } else {
+                this.emit(`${attrName} = ${parseAttrPath(this.ctxName + '.' + attr)} || '';`)
+            }
 
-			if (parts.length) {
-				let pre = []
-				let suf = []
-				let isPassed = false
-				let envName = this.envName
+            if (parts.length) {
+                let pre = []
+                let suf = []
+                let isPassed = false
+                let envName = this.envName
 
-				while (parts.length) {
-					let filter = parts.pop()
+                while (parts.length) {
+                    let filter = parts.pop()
 
-					let parenIndex = filter.indexOf('(')
-					let args = ''
+                    let parenIndex = filter.indexOf('(')
+                    let args = ''
 
-					if (parenIndex !== -1) {
-						args = filter.substring(parenIndex + 1, filter.length - 1)
-						filter = filter.substring(0, parenIndex)
-					}
+                    if (parenIndex !== -1) {
+                        args = filter.substring(parenIndex + 1, filter.length - 1)
+                        filter = filter.substring(0, parenIndex)
+                    }
 
-					filter = envName + '.filter.' + filter
+                    filter = envName + '.filter.' + filter
 
-					if (isPassed) {
-						pre.unshift(filter + '(')
-					} else {
-						isPassed = true
-						pre.unshift(filter + '(' + attrName)
-					}
+                    if (isPassed) {
+                        pre.unshift(filter + '(')
+                    } else {
+                        isPassed = true
+                        pre.unshift(filter + '(' + attrName)
+                    }
 
-					suf.push(',' + args + ')')
-				}
+                    suf.push(',' + args + ')')
+                }
 
-				this.emit(pre.join('') + suf.join(''), {
-					concat: true
-				})
-			} else {
-				this.emit(attrName, {
-					concat: true
-				})
-			}
-		}
-	}
+                this.emit(pre.join('') + suf.join(''), {
+                    concat: true
+                })
+            } else {
+                this.emit(attrName, {
+                    concat: true
+                })
+            }
+        }
+    }
 
-	compileStmt(val) {
-		let parts = val.split(' ')
+    compileStmt(val) {
+        let parts = val.split(' ')
 
-		if (!parts.length) {
-			console.log('empty stmt')
-			return
-		}
+        if (!parts.length) {
+            console.log('empty stmt')
+            return
+        }
 
-		switch (parts[0]) {
-			case 'for':
-				this.compileForStatement(parts)
-				break
-			case 'break': //TODO
-				this.emit('break;')
-				break
-			case 'endfor':
-				this.emit('})')
-				break
-			case 'if':
-				this.compileIfStatement(parts)
-				break
-			case 'endif':
-				this.emit('}')
-				break
-			default:
-				console.log('unknown tag:' + parts[0])
-		}
-	}
+        switch (parts[0]) {
+            case 'for':
+                this.compileForStatement(parts)
+                break
+            case 'break': //TODO
+                this.emit('break;')
+                break
+            case 'endfor':
+                this.emit('})')
+                break
+            case 'if':
+                this.compileIfStatement(parts)
+                break
+            case 'endif':
+                this.emit('}')
+                break
+            default:
+                console.log('unknown tag:' + parts[0])
+        }
+    }
 
-	compileForStatement(parts) {
-		let ctxName = this.ctxName
-		let envName = this.envName
-		let iteratorName = '_iter_' + uuid()
-		this.emit(
-			`var ${iteratorName} = ${parseAttrPath(ctxName + '.' + parts[parts.length - 1])} || [];`
-		)
+    compileForStatement(parts) {
+        let ctxName = this.ctxName
+        let envName = this.envName
+        let iteratorName = '_iter_' + uuid()
+        this.emit(
+            `var ${iteratorName} = ${parseAttrPath(ctxName + '.' + parts[parts.length - 1])} || [];`
+        )
 
-		if (parts[2] === 'in') {
-			this.emit(`${envName}.ext.each(${iteratorName}, function(__val__) {
+        if (parts[2] === 'in') {
+            this.emit(`${envName}.ext.each(${iteratorName}, function(__val__) {
 			var ${ctxName} = Object.assign({}, ${envName}.ctx, {
 				${parts[1]}: __val__
 			});
 			`)
-		}
-	}
+        }
+    }
 
-	compileIfStatement() {
-		//TODO
-	}
+    compileIfStatement() {
+        //TODO
+    }
 
-	generateCode() {
-		let { codes, strName, envName } = this
+    generateCode() {
+        let { codes, strName, envName } = this
 
-		return `function generatedTemplateFn(${envName}) {
+        return `function generatedTemplateFn(${envName}) {
 			return function fn(${this.ctxName}) {
 				var ${strName} = '';
 				try {
@@ -256,35 +256,35 @@ export default class Compiler {
 				return ${strName};
 			}
 		}`
-	}
+    }
 
-	run(source) {
-		this.codes = []
-		let tokens = this.$tokenizer.run(source)
+    run(source) {
+        this.codes = []
+        let tokens = this.$tokenizer.run(source)
 
-		while (tokens.length) {
-			let t = tokens.shift()
-			switch (t.type) {
-				case TokenType.expr:
-					this.compileExpr(t.value)
-					break
+        while (tokens.length) {
+            let t = tokens.shift()
+            switch (t.type) {
+                case TokenType.expr:
+                    this.compileExpr(t.value)
+                    break
 
-				case TokenType.stmt:
-					this.compileStmt(t.value)
-					break
+                case TokenType.stmt:
+                    this.compileStmt(t.value)
+                    break
 
-				case TokenType.text:
-					this.emit(`${t.value}`, {
-						raw: true
-					})
-					break
+                case TokenType.text:
+                    this.emit(`${t.value}`, {
+                        raw: true
+                    })
+                    break
 
-				case TokenType.comment:
-					//skip comment
-					break
-			}
-		}
+                case TokenType.comment:
+                    //skip comment
+                    break
+            }
+        }
 
-		return this.generateCode()
-	}
+        return this.generateCode()
+    }
 }
