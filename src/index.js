@@ -1,7 +1,7 @@
 import fs from 'node:fs'
-import Tokenizer from './tokenizer.js'
 import Compiler from './compiler.js'
 import Env from './env.js'
+import Tokenizer from './tokenizer.js'
 
 export default class Template {
     constructor(config) {
@@ -15,9 +15,11 @@ export default class Template {
     }
 
     compile(str) {
-        let envName = this.$compiler.envName
-        let rawFn = this.$compiler.run(str)
-        let env = new Env()
+        const envName = this.$compiler.envName
+        const rawFn = this.$compiler.run(str)
+        const env = new Env()
+
+        console.log(rawFn)
 
         return {
             env,
@@ -31,7 +33,7 @@ export default class Template {
 
     render(name, ctx, callback) {
         try {
-            let str = fs.readFileSync(name, {
+            const str = fs.readFileSync(name, {
                 encoding: 'utf8'
             })
             return this.renderString(str, ctx, callback)
@@ -41,18 +43,17 @@ export default class Template {
     }
 
     renderString(str, ctx, callback) {
-        let fn = this.compile(str)
-        let hasCallback = typeof callback === 'function'
+        const fn = this.compile(str)
+        const hasCallback = typeof callback === 'function'
 
         try {
-            let result = fn.render(ctx)
+            const result = fn.render(ctx)
 
             if (hasCallback) {
                 callback(null, result)
                 return this
-            } else {
-                return result
             }
+            return result
         } catch (e) {
             if (hasCallback) {
                 callback(e)

@@ -8,15 +8,15 @@ export default class Tokenizer {
     }
 
     prepare() {
-        let prefix = []
+        const prefix = []
 
-        startTags.forEach((v) => {
-            let c = this.tags[v][0]
+        for (const v of startTags) {
+            const c = this.tags[v][0]
 
             if (!prefix.includes(c)) {
                 prefix.push(c)
             }
-        })
+        }
 
         this.$prefix = prefix
     }
@@ -26,12 +26,12 @@ export default class Tokenizer {
     }
 
     advance() {
-        let tags = this.tags
-        let source = this.source
+        const tags = this.tags
+        const source = this.source
         this.consumeText()
 
         for (let i = 0; i < startTags.length; i++) {
-            let tag = tags[startTags[i]]
+            const tag = tags[startTags[i]]
 
             if (source.substring(this.cur, this.cur + tag.length) === tag) {
                 return startTags[i]
@@ -61,18 +61,17 @@ export default class Tokenizer {
     }
 
     consumeText() {
-        let $prefix = this.$prefix
+        const $prefix = this.$prefix
         let text = ''
 
         while (!this.isEnd()) {
-            let c = this.source[this.cur]
+            const c = this.source[this.cur]
 
             if ($prefix.includes(c)) {
                 break
-            } else {
-                text += c
-                this.cur++
             }
+            text += c
+            this.cur++
         }
 
         text.length &&
@@ -83,10 +82,10 @@ export default class Tokenizer {
     }
 
     consumeTag(type) {
-        let source = this.source
-        let startTag = this.tags[type + 'Start']
-        let endTag = this.tags[type + 'End']
-        let endTagLen = endTag.length
+        const source = this.source
+        const startTag = this.tags[`${type}Start`]
+        const endTag = this.tags[`${type}End`]
+        const endTagLen = endTag.length
         let tokenContent = ''
         this.cur += startTag.length
 
@@ -106,10 +105,10 @@ export default class Tokenizer {
          * remove redundant whitespaces
          */
         if (tokenContent.length) {
-            let prevToken = this.tokens[this.tokens.length - 1]
+            const prevToken = this.tokens[this.tokens.length - 1]
 
             if (prevToken && prevToken.type === TokenType.text) {
-                let value = prevToken.value
+                const value = prevToken.value
 
                 if (value.match(/\s+$/)) {
                     prevToken.value = value.trimRight()

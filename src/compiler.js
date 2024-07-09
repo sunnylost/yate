@@ -1,5 +1,5 @@
-import Tokenizer from './tokenizer.js'
 import TokenType from './tokenType.js'
+import Tokenizer from './tokenizer.js'
 import { uuid } from './util.js'
 const DOT = '.'
 const BRACKET_LEFT = '['
@@ -7,16 +7,16 @@ const BRACKET_RIGHT = ']'
 const rbracket = /([^[]+)(\[[^]]+)/
 
 function isStringLiteral(val) {
-    let firstChar = val[0]
-    let lastChar = val[val.length - 1]
+    const firstChar = val[0]
+    const lastChar = val[val.length - 1]
 
     //string
     if (firstChar === "'" || firstChar === '"') {
         if (firstChar === lastChar) {
             return true
-        } else {
-            throw Error(`${val} is not enclosed correctly.`)
         }
+
+        throw Error(`${val} is not enclosed correctly.`)
     }
 }
 
@@ -37,18 +37,18 @@ function parseAttrPath(expr) {
             throw Error(`"${expr}" is not a correct format.`)
         }
 
-        let arr = expr.split(DOT),
-            newArr = []
+        const arr = expr.split(DOT)
+        const newArr = []
 
         for (let i = 0; i < arr.length; i++) {
-            let item = arr[i]
-            let previous = arr.slice(0, i + 1)
+            const item = arr[i]
+            const previous = arr.slice(0, i + 1)
 
             if (item.includes(BRACKET_LEFT)) {
-                let matches = item.match(rbracket)
+                const matches = item.match(rbracket)
 
                 if (matches && matches.length > 2) {
-                    let tmp = previous.slice(0, previous.length - 1)
+                    const tmp = previous.slice(0, previous.length - 1)
                     tmp.push(matches[1])
                     newArr.push(tmp.join(DOT))
                 }
@@ -65,12 +65,12 @@ function parseAttrPath(expr) {
 
 export default class Compiler {
     constructor(config) {
-        let id = uuid()
+        const id = uuid()
 
         this.$tokenizer = new Tokenizer(config)
-        this.strName = 'str_' + id
-        this.ctxName = 'ctx_' + id
-        this.envName = 'env_' + id
+        this.strName = `str_${id}`
+        this.ctxName = `ctx_${id}`
+        this.envName = `env_${id}`
     }
 
     emit(content, config = {}) {
@@ -84,14 +84,14 @@ export default class Compiler {
     }
 
     compileExpr(val) {
-        let len = val.length
-        let parts = []
+        const len = val.length
+        const parts = []
         let item = ''
         let isInString = false
-        let strStart = []
+        const strStart = []
 
         for (let i = 0; i < len; i++) {
-            let c = val[i]
+            const c = val[i]
 
             switch (c) {
                 case '|':
@@ -139,27 +139,27 @@ export default class Compiler {
         item.length && parts.push(item)
 
         if (parts.length) {
-            let attr = parts.splice(0, 1)
-            let attrName = '__tmp__'
+            const attr = parts.splice(0, 1)
+            const attrName = '__tmp__'
 
             this.emit(`var ${attrName};`)
 
             if (isStringLiteral(attr)) {
                 this.emit(`${attrName} = ${attr.substring(1, attr.length - 1)}`)
             } else {
-                this.emit(`${attrName} = ${parseAttrPath(this.ctxName + '.' + attr)} || '';`)
+                this.emit(`${attrName} = ${parseAttrPath(`${this.ctxName}.${attr}`)} || '';`)
             }
 
             if (parts.length) {
-                let pre = []
-                let suf = []
+                const pre = []
+                const suf = []
                 let isPassed = false
-                let envName = this.envName
+                const envName = this.envName
 
                 while (parts.length) {
                     let filter = parts.pop()
 
-                    let parenIndex = filter.indexOf('(')
+                    const parenIndex = filter.indexOf('(')
                     let args = ''
 
                     if (parenIndex !== -1) {
@@ -167,16 +167,16 @@ export default class Compiler {
                         filter = filter.substring(0, parenIndex)
                     }
 
-                    filter = envName + '.filter.' + filter
+                    filter = `${envName}.filter.${filter}`
 
                     if (isPassed) {
-                        pre.unshift(filter + '(')
+                        pre.unshift(`${filter}(`)
                     } else {
                         isPassed = true
-                        pre.unshift(filter + '(' + attrName)
+                        pre.unshift(`${filter}(${attrName}`)
                     }
 
-                    suf.push(',' + args + ')')
+                    suf.push(`,${args})`)
                 }
 
                 this.emit(pre.join('') + suf.join(''), {
@@ -191,7 +191,7 @@ export default class Compiler {
     }
 
     compileStmt(val) {
-        let parts = val.split(' ')
+        const parts = val.split(' ')
 
         if (!parts.length) {
             console.log('empty stmt')
@@ -215,16 +215,16 @@ export default class Compiler {
                 this.emit('}')
                 break
             default:
-                console.log('unknown tag:' + parts[0])
+                console.log(`unknown tag:${parts[0]}`)
         }
     }
 
     compileForStatement(parts) {
-        let ctxName = this.ctxName
-        let envName = this.envName
-        let iteratorName = '_iter_' + uuid()
+        const ctxName = this.ctxName
+        const envName = this.envName
+        const iteratorName = `_iter_${uuid()}`
         this.emit(
-            `var ${iteratorName} = ${parseAttrPath(ctxName + '.' + parts[parts.length - 1])} || [];`
+            `var ${iteratorName} = ${parseAttrPath(`${ctxName}.${parts[parts.length - 1]}`)} || [];`
         )
 
         if (parts[2] === 'in') {
@@ -241,7 +241,7 @@ export default class Compiler {
     }
 
     generateCode() {
-        let { codes, strName, envName } = this
+        const { codes, strName, envName } = this
 
         return `function generatedTemplateFn(${envName}) {
 			return function fn(${this.ctxName}) {
@@ -260,10 +260,11 @@ export default class Compiler {
 
     run(source) {
         this.codes = []
-        let tokens = this.$tokenizer.run(source)
+        const tokens = this.$tokenizer.run(source)
 
         while (tokens.length) {
-            let t = tokens.shift()
+            const t = tokens.shift()
+
             switch (t.type) {
                 case TokenType.expr:
                     this.compileExpr(t.value)

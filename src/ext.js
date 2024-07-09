@@ -1,15 +1,13 @@
 export default {
     htmlEncode(s) {
-        let escaped = {
+        const escaped = {
             '&': '&amp;',
             '<': '&lt;',
             '>': '&gt;',
             "'": '&#39;',
             '"': '&quot;'
         }
-        return s.replace(/[&<>'"]/g, function (m) {
-            return escaped[m]
-        })
+        return s.replace(/[&<>'"]/g, (m) => escaped[m])
     },
 
     urlEncode(str) {
@@ -26,9 +24,9 @@ export default {
                 handler.call(null, obj[i], i, obj)
             }
         } else {
-            Object.getOwnPropertyNames(obj).forEach((key) => {
+            for (const key of Object.getOwnPropertyNames(obj)) {
                 handler.call(null, obj[key], key, obj)
-            })
+            }
         }
     }
 }
