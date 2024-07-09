@@ -8,6 +8,13 @@ export default class Template {
         this.config = Object.assign({}, config)
         this.$tokenizer = new Tokenizer(this.config)
         this.$compiler = new Compiler(this.config)
+        this.$customFilters = new Map()
+    }
+
+    addFilter(name, handler) {
+        if (typeof name === 'string' && typeof handler === 'function') {
+            this.$customFilters.set(name, handler)
+        }
     }
 
     tokenizer() {
@@ -19,7 +26,9 @@ export default class Template {
         const rawFn = this.$compiler.run(str)
         const env = new Env()
 
-        console.log(rawFn)
+        for (const [filterName, filterHandler] of this.$customFilters) {
+            env.filter.addFilter(filterName, filterHandler)
+        }
 
         return {
             env,

@@ -1,5 +1,5 @@
 import Ext from './ext.js'
-import * as Filter from './filter.js'
+import Filter from './filter.js'
 
 export default function () {
     return {

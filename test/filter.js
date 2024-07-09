@@ -11,3 +11,14 @@ test('builtin filter', (t) => {
         'Small'
     )
 })
+
+test('custom filter', (t) => {
+    template.addFilter('showFirst', (value) => value[0])
+
+    t.is(
+        template.renderString('{{ a | showFirst }}', {
+            a: 'small'
+        }),
+        's'
+    )
+})

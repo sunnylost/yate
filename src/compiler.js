@@ -167,7 +167,7 @@ export default class Compiler {
                         filter = filter.substring(0, parenIndex)
                     }
 
-                    filter = `${envName}.filter.${filter}`
+                    filter = `${envName}.filter.filters.${filter}`
 
                     if (isPassed) {
                         pre.unshift(`${filter}(`)
