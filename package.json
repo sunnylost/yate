@@ -1,21 +1,26 @@
 {
-	"name": "yate",
-	"version": "0.0.1-alpha",
-	"packageManager": "pnpm@9.4.0",
-	"description": "template engine",
-	"main": "index.js",
-	"type": "module",
-	"directories": {
-		"test": "test"
-	},
-	"scripts": {
-		"test": "ava"
-	},
-	"keywords": [],
-	"author": "",
-	"license": "ISC",
-	"devDependencies": {
-		"@biomejs/biome": "^1.8.3",
-		"ava": "^6.1.3"
-	}
+    "name": "yate",
+    "version": "0.0.1-alpha",
+    "packageManager": "pnpm@9.6.0",
+    "description": "template engine",
+    "main": "index.js",
+    "type": "module",
+    "directories": {
+        "test": "test"
+    },
+    "scripts": {
+        "test": "ava",
+        "build": "swc src/index.ts"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "devDependencies": {
+        "@biomejs/biome": "^1.8.3",
+        "@swc/cli": "^0.4.0",
+        "@swc/core": "^1.7.0",
+        "ava": "^6.1.3",
+        "tsx": "^4.16.2",
+        "typescript": "^5.5.3"
+    }
 }
