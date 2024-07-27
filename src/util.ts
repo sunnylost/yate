@@ -1,3 +1,9 @@
+let gid = 0
+
 export function uuid() {
-    return `${Math.random().toString(16)}000000000`.substring(2, 8).substring(0, 8)
+    return `gid_${gid++}`
+}
+
+export function capitalize(str: string) {
+    return str.charAt(0).toUpperCase() + str.substring(1).toLowerCase()
 }
