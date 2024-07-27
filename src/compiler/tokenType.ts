@@ -28,6 +28,31 @@ export enum TokenType {
     TagFilter,
     TagCall,
     TagRaw,
+    // expression
+    LEFT_PAREN,
+    RIGHT_PAREN,
+    LEFT_BRACE,
+    RIGHT_BRACE,
+    COMMA,
+    DOT,
+    MINUS,
+    PLUS,
+    SEMICOLON,
+    STAR,
+    BANG,
+    LESS,
+    GREATER,
+    EQUAL,
+    BANG_EQUAL,
+    LESS_EQUAL,
+    EQUAL_EQUAL,
+    GREATER_EQUAL,
+    SLASH,
+    NUMBER,
+    STRING,
+    AND,
+    OR,
+    IDENTIFIER,
     EOF
 }
 
@@ -43,9 +68,15 @@ export const Tags = [
     'raw'
 ] as const
 
+export const keywords = ['and', 'or'] as const
+
+export type Keyword = (typeof keywords)[number]
+
 export type Token = {
     type: TokenType
     text?: string
     start: number
     end: number
+    line: number
+    tokens?: Token[]
 }
