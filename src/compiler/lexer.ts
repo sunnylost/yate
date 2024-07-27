@@ -1,5 +1,5 @@
 import { capitalize } from '../util.ts'
-import { type Keyword, keywords, Tags, type Token, TokenType } from './tokenType.ts'
+import { type Keyword, keywords, Tags, type Token, type Tag, TokenType } from './tokenType.ts'
 
 const splitterBegin = ['{{', '{#']
 const splitterEnd = ['}}', '#}']
@@ -18,6 +18,14 @@ function isAlphaNumeric(c: string) {
 
 function isKeyword(str: string): str is Keyword {
     return keywords.includes(str as Keyword)
+}
+
+function handleTagType(tagName: string) {
+    if (tagName.startsWith('end')) {
+        return `Tag${capitalize(tagName.replace('end', ''))}End`
+    }
+
+    return `Tag${capitalize(tagName)}`
 }
 
 export default class Lexer {
@@ -61,7 +69,8 @@ export default class Lexer {
             }
         }
 
-        console.log(tokens)
+        tokens.push(this.#generateToken(TokenType.EOF))
+
         return tokens
     }
 
@@ -161,7 +170,7 @@ export default class Lexer {
         const tag = this.#source.substring(start, this.#pos)
         const tokens: Token[] = []
 
-        if (Tags.includes(tag as unknown as (typeof Tags)[number])) {
+        if (Tags.includes(tag as Tag)) {
             while (true) {
                 const token = this.#consumeExpressionContent()
 
@@ -172,14 +181,12 @@ export default class Lexer {
                 }
             }
 
-            if (tokens.length) {
-                this.#advanceExpressionEnd()
-                return this.#generateToken(TokenType[`Tag${capitalize(tag)}`], '',tokens)
-            }
+            this.#advanceExpressionEnd()
+            return this.#generateToken(TokenType[handleTagType(tag)], '', tokens)
         }
     }
 
-    #generateToken(type: TokenType, text = '', tokens?:Token[]) {
+    #generateToken(type: TokenType, text = '', tokens?: Token[]) {
         return {
             type,
             text,
@@ -228,7 +235,7 @@ export default class Lexer {
             type = TokenType.IDENTIFIER
         }
 
-        return this.#generateToken(type)
+        return this.#generateToken(type, text)
     }
 
     #consumeString(splitter: string) {
@@ -246,9 +253,9 @@ export default class Lexer {
             return
         }
 
-        this.#advance()
-
         const value = this.#source.substring(start, this.#pos)
+
+        this.#advance()
         return this.#generateToken(TokenType.STRING, value)
     }
 
@@ -266,6 +273,12 @@ export default class Lexer {
 
             case '{':
                 return this.#generateToken(TokenType.LEFT_BRACE)
+
+            case '[':
+                return this.#generateToken(TokenType.LEFT_BRACKET)
+
+            case ']':
+                return this.#generateToken(TokenType.RIGHT_BRACKET)
 
             case '}':
                 if (this.#peek() === '}') {
@@ -331,10 +344,11 @@ export default class Lexer {
                 }
 
                 if (isAlpha(c)) {
+                    this.#pos--
                     return this.#consumeIdentifier()
                 }
 
-                console.error('Error', c)
+                console.error('[lex-error]: unknown character: ', c)
         }
     }
 }

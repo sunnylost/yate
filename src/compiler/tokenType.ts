@@ -12,15 +12,12 @@ export default {
 }
 
 export enum TokenType {
-    BOF,
     HTML,
     COMMENT,
-    ExpressionStart,
-    ExpressionEnd,
     TagIf,
-    TagIfEnd,
+    TagEndIf,
     TagFor,
-    TagForEnd,
+    TagEndFor,
     TagSet,
     TagBlock,
     TagImport,
@@ -28,11 +25,12 @@ export enum TokenType {
     TagFilter,
     TagCall,
     TagRaw,
-    // expression
-    LEFT_PAREN,
+    LEFT_PAREN, // expression
     RIGHT_PAREN,
     LEFT_BRACE,
     RIGHT_BRACE,
+    LEFT_BRACKET,
+    RIGHT_BRACKET,
     COMMA,
     DOT,
     MINUS,
@@ -48,17 +46,18 @@ export enum TokenType {
     EQUAL_EQUAL,
     GREATER_EQUAL,
     SLASH,
+    IN,
     NUMBER,
     STRING,
-    AND,
-    OR,
     IDENTIFIER,
     EOF
 }
 
 export const Tags = [
     'if',
+    'endif',
     'for',
+    'endfor',
     'set',
     'block',
     'import',
@@ -67,8 +66,9 @@ export const Tags = [
     'call',
     'raw'
 ] as const
+export type Tag = (typeof Tags)[number]
 
-export const keywords = ['and', 'or'] as const
+export const keywords = ['in'] as const
 
 export type Keyword = (typeof keywords)[number]
 
