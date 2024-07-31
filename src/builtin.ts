@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { forEach, first,last,size, } from 'lodash-es'
 
 type IterHandler = (value: unknown, key: number|string) => void

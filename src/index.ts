@@ -1,46 +1,33 @@
 import fs from 'node:fs'
-import Compiler from './compiler.js'
-import Env from './env.js'
-import Tokenizer from './tokenizer.js'
+import compile from './compiler/index.ts'
+import Env from './env.ts'
+import type { RenderContext, RenderCallback, RenderError } from './types.ts'
 
 export default class Template {
-    constructor(config) {
-        this.config = Object.assign({}, config)
-        this.$tokenizer = new Tokenizer(this.config)
-        this.$compiler = new Compiler(this.config)
-        this.$customFilters = new Map()
-    }
-
-    addFilter(name, handler) {
-        if (typeof name === 'string' && typeof handler === 'function') {
-            this.$customFilters.set(name, handler)
-        }
-    }
-
-    tokenizer() {
-        return new Tokenizer(this)
-    }
-
-    compile(str) {
-        const envName = this.$compiler.envName
-        const rawFn = this.$compiler.run(str)
+    compile(code:string) {
         const env = new Env()
+        const { envName, ctxName, compiledCodes } = compile(code)
+        console.log(envName, ctxName)
 
-        for (const [filterName, filterHandler] of this.$customFilters) {
-            env.filter.addFilter(filterName, filterHandler)
-        }
+        const templateFn = new Function(envName, `return ${compiledCodes}(${envName})`)
 
         return {
-            env,
-            template: new Function(envName, `return ${rawFn}(${envName})`)(env),
-            render(ctx) {
-                env.ctx = ctx || {}
-                return this.template(env.ctx)
+            render(ctx:unknown) {
+                const newEnv = Object.assign({} ,env, {
+                    ctx: ctx || {}
+                })
+                return templateFn(newEnv)(newEnv.ctx)
             }
         }
     }
 
-    render(name, ctx, callback) {
+    /**
+     *
+     * @param name
+     * @param ctx
+     * @param callback
+     */
+    render(name: string, ctx?:RenderContext, callback?:RenderCallback) {
         try {
             const str = fs.readFileSync(name, {
                 encoding: 'utf8'
@@ -51,7 +38,7 @@ export default class Template {
         }
     }
 
-    renderString(str, ctx, callback) {
+    renderString(str:string, ctx?:RenderContext, callback?:RenderCallback) {
         const fn = this.compile(str)
         const hasCallback = typeof callback === 'function'
 
@@ -63,11 +50,11 @@ export default class Template {
                 return this
             }
             return result
-        } catch (e) {
+        } catch (err) {
             if (hasCallback) {
-                callback(e)
+                callback(err as RenderError)
             } else {
-                throw new Error(e)
+                throw new Error(err as unknown as string)
             }
         }
     }

@@ -22,7 +22,7 @@ function isKeyword(str: string): str is Keyword {
 
 function handleTagType(tagName: string) {
     if (tagName.startsWith('end')) {
-        return `Tag${capitalize(tagName.replace('end', ''))}End`
+        return `TagEnd${capitalize(tagName.replace('end', ''))}`
     }
 
     return `Tag${capitalize(tagName)}`

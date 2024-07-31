@@ -16,7 +16,6 @@ export default class Parser {
     #ctx = ''
     #env = ''
     #str = ''
-    #builtin = ''
     #codes: string[]
 
     constructor(tokens: Token[]) {
@@ -26,7 +25,6 @@ export default class Parser {
         this.#ctx = `ctx_${id}`
         this.#env = `env_${id}`
         this.#str = `str_${id}`
-        this.#builtin = `builtin_${id}`
         this.#codes = []
     }
 
@@ -87,14 +85,14 @@ export default class Parser {
     }
 
     #getIdentifierList(tokens:Token[]) {
-        const list: string[] = []
+        const list: Token[] = []
 
         while (tokens.length) {
             const token = tokens[0]
 
             if (token.type === TokenType.IDENTIFIER) {
                 if (token.text) {
-                    list.push(token.text)
+                    list.push(token)
                 }
             } else if (token.type !== TokenType.COMMA) {
                 break
@@ -147,7 +145,7 @@ export default class Parser {
             return
         }
 
-        const list = this.#getIdentifierList(tokens)
+        const list = this.#getIdentifierList(tokens).map(t => t.text)
         const nextToken = tokens.shift()
 
         if (nextToken?.type !== TokenType.IN) {
@@ -161,7 +159,7 @@ export default class Parser {
         }
 
         const id = token.text
-        const builtin = this.#builtin
+        const builtin = `${this.#env}.builtin`
         this.#emit(`
         ;(() => {
             const length = ${builtin}.len(${id})
@@ -169,7 +167,7 @@ export default class Parser {
                 index: 0,
                 revindex: 0,
                 first: ${builtin}.first(${id}),
-                last: ${builtin}.last(${id}),,
+                last: ${builtin}.last(${id}),
                 length: length,
             }
             ${builtin}.iter(${id}, (v, i) => {
@@ -217,7 +215,10 @@ export default class Parser {
             this.#advance()
         }
 
-        return `
+        return {
+            envName: this.#env,
+            ctxName: this.#ctx,
+            compiledCodes: `
 function generatedTemplateFn(${this.#env}) {
     return function fn(${this.#ctx}) {
         let ${this.#str} = '';
@@ -231,6 +232,7 @@ function generatedTemplateFn(${this.#env}) {
 
         return ${this.#str};
     }
-}`
+}`.trim()
+        }
     }
 }
