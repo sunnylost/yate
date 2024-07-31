@@ -4,7 +4,7 @@ import Env from './env.ts'
 import type { RenderContext, RenderCallback, RenderError } from './types.ts'
 
 export default class Template {
-    compile(code:string) {
+    compile(code: string) {
         const env = new Env()
         const { envName, ctxName, compiledCodes } = compile(code)
         console.log(envName, ctxName)
@@ -12,8 +12,8 @@ export default class Template {
         const templateFn = new Function(envName, `return ${compiledCodes}(${envName})`)
 
         return {
-            render(ctx:unknown) {
-                const newEnv = Object.assign({} ,env, {
+            render(ctx: unknown) {
+                const newEnv = Object.assign({}, env, {
                     ctx: ctx || {}
                 })
                 return templateFn(newEnv)(newEnv.ctx)
@@ -27,7 +27,7 @@ export default class Template {
      * @param ctx
      * @param callback
      */
-    render(name: string, ctx?:RenderContext, callback?:RenderCallback) {
+    render(name: string, ctx?: RenderContext, callback?: RenderCallback) {
         try {
             const str = fs.readFileSync(name, {
                 encoding: 'utf8'
@@ -38,7 +38,7 @@ export default class Template {
         }
     }
 
-    renderString(str:string, ctx?:RenderContext, callback?:RenderCallback) {
+    renderString(str: string, ctx?: RenderContext, callback?: RenderCallback) {
         const fn = this.compile(str)
         const hasCallback = typeof callback === 'function'
 

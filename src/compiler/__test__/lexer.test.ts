@@ -1,4 +1,4 @@
-import {test,expect} from 'bun:test'
+import { test, expect } from 'bun:test'
 import Lexer from '../lexer.ts'
 import { TokenType } from '../tokenType.ts'
 
