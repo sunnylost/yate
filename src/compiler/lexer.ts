@@ -1,5 +1,5 @@
 import { capitalize } from '../util.ts'
-import { type Keyword, keywords, Tags, type Token, type Tag, TokenType } from './tokenType.ts'
+import { type Keyword, keywords, type Tag, Tags, type Token, TokenType } from './tokenType.ts'
 
 const splitterBegin = ['{{', '{#']
 const splitterEnd = ['}}', '#}']
@@ -74,6 +74,10 @@ export default class Lexer {
         return tokens
     }
 
+    #skipBlank() {
+        this.#scanForward((c) => /[ \s\t\n]/.test(c))
+    }
+
     #isEnd() {
         return this.#pos >= this.#size
     }
@@ -145,6 +149,8 @@ export default class Lexer {
     }
 
     #advanceExpressionEnd() {
+        this.#skipBlank()
+
         if (splitterEnd[0] === this.#peek(1)) {
             this.#pos += 2
 
@@ -163,14 +169,15 @@ export default class Lexer {
             return
         }
 
-        this.#scanForward((c) => /[ \s\t\n]/.test(c))
+        this.#skipBlank()
 
         const start = this.#pos
         this.#scanForward((c) => /[a-z]/.test(c))
         const tag = this.#source.substring(start, this.#pos)
         const tokens: Token[] = []
+        let isTag = Tags.includes(tag as Tag)
 
-        if (Tags.includes(tag as Tag)) {
+        if (isTag) {
             while (true) {
                 const token = this.#consumeExpressionContent()
 
@@ -180,10 +187,14 @@ export default class Lexer {
                     break
                 }
             }
-
-            this.#advanceExpressionEnd()
-            return this.#generateToken(TokenType[handleTagType(tag)], '', tokens)
         }
+
+        this.#advanceExpressionEnd()
+        return this.#generateToken(
+            isTag ? TokenType[handleTagType(tag)] : TokenType.IDENTIFIER,
+            tag,
+            tokens
+        )
     }
 
     #generateToken(type: TokenType, text = '', tokens?: Token[]) {
@@ -330,7 +341,7 @@ export default class Lexer {
                 return this.#generateToken(TokenType.SLASH)
 
             case '"':
-            case '':
+            case "'":
                 return this.#consumeString(c)
 
             case '\n':

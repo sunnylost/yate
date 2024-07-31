@@ -36,11 +36,11 @@ export default class Parser {
         if (!this.#isEnd()) {
             this.#cur++
         }
-        return this.#previous();
+        return this.#previous()
     }
 
     #previous() {
-        return this.#tokens[this.#cur - 1];
+        return this.#tokens[this.#cur - 1]
     }
 
     #check(type: TokenType) {
@@ -53,17 +53,6 @@ export default class Parser {
 
     #peek() {
         return this.#tokens[this.#cur]
-    }
-
-    #match(...types: TokenType[]) {
-        for (const type of types) {
-            if (this.#check(type)) {
-                this.#advance()
-                return true
-            }
-        }
-
-        return false
     }
 
     #emit(content?: string, type: EmitType = Normal) {
@@ -84,7 +73,7 @@ export default class Parser {
         }
     }
 
-    #getIdentifierList(tokens:Token[]) {
+    #getIdentifierList(tokens: Token[]) {
         const list: Token[] = []
 
         while (tokens.length) {
@@ -145,7 +134,7 @@ export default class Parser {
             return
         }
 
-        const list = this.#getIdentifierList(tokens).map(t => t.text)
+        const list = this.#getIdentifierList(tokens).map((t) => t.text)
         const nextToken = tokens.shift()
 
         if (nextToken?.type !== TokenType.IN) {
@@ -177,6 +166,48 @@ export default class Parser {
         `)
     }
 
+    /**
+     * {{ id }}
+     * @private
+     */
+    #compileIdentifier() {
+        if (this.#check(TokenType.IDENTIFIER)) {
+            const token = this.#peek()
+            const text = token.text?.trim()
+
+            if (text) {
+                this.#emit(`${this.#ctx}["${text}"] ?? ''`, Concat)
+            }
+        }
+    }
+
+    /**
+     * {{ set id = val }}
+     * @private
+     */
+    #compileSet() {
+        const tokens = this.#peek().tokens
+
+        if (!tokens) {
+            return
+        }
+
+        let id = ''
+        let initializer: string[] = []
+
+        for (let i = 0; i < tokens.length; i++) {
+            const token = tokens[i]
+
+            if (!id && token.type === TokenType.IDENTIFIER) {
+                id = token.text as string
+            } else if (token.type !== TokenType.EQUAL) {
+                initializer.push(token.text ?? '')
+            }
+        }
+
+        this.#emit(`${this.#ctx}["${id}"] = ${initializer.join(' ')}\n`)
+    }
+
     parse() {
         while (!this.#isEnd()) {
             const token = this.#peek()
@@ -206,6 +237,14 @@ export default class Parser {
                     this.#emit(`
                     })
                 })();\n`)
+                    break
+
+                case TokenType.TagSet:
+                    this.#compileSet()
+                    break
+
+                case TokenType.IDENTIFIER:
+                    this.#compileIdentifier()
                     break
 
                 default:
